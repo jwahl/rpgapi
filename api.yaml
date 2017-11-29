@@ -1,0 +1,440 @@
+openapi: 3.0.0
+info:
+  description: This is ReadyPayGo API server for processing credit cards and eChecks
+  version: 1.0.0
+  title: ReadyPayGo API
+  termsOfService: 'https://my.readypaygo.com/terms'
+  contact:
+    name: API Support
+    url: 'https://my.readypaygo.com/help'
+    email: office@readypaygo.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - url: 'https://api2.readypaygo.com'
+paths:
+
+#***************Cards*********
+  /card:
+    post:
+      description: Creates a new card token.  Duplicates are allowed.
+      operationId: createCard
+      parameters:
+        - in: header
+          name: X-Request-ID
+          schema: 
+            $ref: '#/components/headers/X-REQUEST-ID'
+          description: GUID for log tracking      
+      tags:
+        - Credit Cards
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Card'
+      responses:
+        '200':
+          description: Successful token creation response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+
+  /card/{token_id}:
+    put:
+      description: Update a credit card token
+      operationId: updateCard
+      parameters:
+        - in: header
+          name: X-Request-ID
+          schema: 
+            $ref: '#/components/headers/X-REQUEST-ID'
+          description: GUID for log tracking
+        - in: path
+          name: token_id
+          description: 'Token ID to be removed - note: token will not be removed if there are any payment schedules associated with it.'
+          schema:
+            $ref: '#/components/schemas/Token'
+          required: true
+      tags:
+        - Credit Cards
+      requestBody:
+        description: Updates an existing card token.
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Card'
+      responses:
+        '200':
+          description: The resource was updated successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+    delete:
+      description: Delete a credit card token
+      operationId: deleteCard
+      parameters:
+        - in: header
+          name: X-Request-ID
+          schema: 
+            $ref: '#/components/headers/X-REQUEST-ID'
+          description: GUID for log tracking
+        - in: path
+          name: token_id
+          description: 'Token ID to be removed - note: token will not be removed if there are any payment schedules associated with it.'
+          schema:
+            $ref: '#/components/schemas/Token'
+          required: true
+      tags:
+        - Credit Cards
+      responses:
+        '204':
+          description: The resource was deleted successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'  
+
+
+  /check:
+    post:
+      description: Creates a new eCheck token.  Duplicates are allowed.
+      operationId: createCheck
+      parameters:
+        - in: header
+          name: X-Request-ID
+          schema: 
+            $ref: '#/components/headers/X-REQUEST-ID'
+          description: GUID for log tracking      
+      tags:
+        - Checks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Check'
+      responses:
+        '200':
+          description: token response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+                   
+  /check/{token_id}:
+    put:
+      description: Update an eCheck token
+      operationId: updateCheck
+      parameters:
+        - in: header
+          name: X-Request-ID
+          schema: 
+            $ref: '#/components/headers/X-REQUEST-ID'
+          description: GUID for log tracking
+        - in: path
+          name: token_id
+          description: 'Token ID to be removed - note: token will not be removed if there are any payment schedules associated with it.'
+          schema:
+            $ref: '#/components/schemas/Token'
+          required: true
+      tags:
+        - Checks
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Check'
+      responses:
+        '200':
+          description: The resource was updated successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+    delete:
+      description: Delete an eCheck token
+      operationId: deleteCheck
+      parameters:
+        - in: header
+          name: X-Request-ID
+          schema: 
+            $ref: '#/components/headers/X-REQUEST-ID'
+          description: GUID for log tracking
+        - in: path
+          name: token_id
+          description: 'Token ID to be removed - note: token will not be removed if there are any payment schedules associated with it.'
+          schema:
+            $ref: '#/components/schemas/Token'
+          required: true
+      tags:
+        - Checks
+
+      responses:
+        '204':
+          description: The resource was deleted successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+
+#******************CHARGES******************
+
+  /charge/card:
+    post:
+      description: One time charge of credit card
+      operationId: chargeCard
+      parameters:
+        - in: header
+          name: X-Request-ID
+          schema: 
+            $ref: '#/components/headers/X-REQUEST-ID'
+          description: GUID for log tracking      
+      tags:
+        - Charges
+        - Credit Cards
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Card'
+                - $ref: '#/components/schemas/Charge'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessfulTransaction'
+          
+  /charge/check:
+    post:
+      description: One time charge of eCheck
+      operationId: chargeCheck
+      parameters:
+        - in: header
+          name: X-Request-ID
+          schema: 
+            $ref: '#/components/headers/X-REQUEST-ID'
+          description: GUID for log tracking      
+      tags:
+        - Charges
+        - Checks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Check'
+                - $ref: '#/components/schemas/Charge'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessfulTransaction'
+          
+  /charge/check/{token_id}:
+    post:
+      description: One time charge of tokenized check
+      operationId: chargeCheckToken
+      parameters:
+        - in: header
+          name: X-Request-ID
+          schema: 
+            $ref: '#/components/headers/X-REQUEST-ID'
+          description: GUID for log tracking      
+      tags:
+        - Charges
+        - Checks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Token'
+                - $ref: '#/components/schemas/Charge'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessfulTransaction'  
+          
+  /charge/card/{token_id}:
+    post:
+      description: One time charge of tokenized card
+      operationId: chargeCardToken
+      parameters:
+        - in: header
+          name: X-Request-ID
+          schema: 
+            $ref: '#/components/headers/X-REQUEST-ID'
+          description: GUID for log tracking      
+      tags:
+        - Charges
+        - Credit Cards
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Token'
+                - $ref: '#/components/schemas/Charge'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessfulTransaction'
+
+components:
+  responses:
+    SuccessfulTransaction:
+      description: Transaction was successfully run
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ChargeResult'
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  headers:
+    X-REQUEST-ID:
+      description: used to track API activity in logs
+      schema:
+        type: object
+        properties:
+          guid:
+            type: string
+            format: uuid
+            example: '0c07dfdc-89bd-4881-a361-673f6f08efca'
+            description: Globally unique conversation identifier
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+    appId:
+      type: apiKey
+      in: header
+      name: X-APP-ID
+  schemas:
+    Charge:
+      type: object
+      properties:
+        amount:
+          type: integer
+          description:  amount being charged, in pennies
+    ChargeResult:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+          maxLength:  32
+          description:  Transaction ID returned by payment gateway
+        auth_code: 
+          type: string
+          maxLength:  16
+          description: Authrization Code returned by payment gateway, if available
+        message:
+          type: string
+          maxLength: 128
+          description: Transaction success message retuned by payment gateway, if available
+    Token:
+      type: object
+      properties:
+        token_id:
+          type: string
+          minLength: 12
+          maxLength: 16
+          description: Token ID for use in tokenized payments
+    Card:
+      type: object
+      properties:
+        number:
+          type: string
+          example: 4111111111111111
+          maxLength: 18
+          description: Full credit card number
+        expMonth:
+          type: integer
+          minLength: 2
+          maxLength: 2
+          description: Expiration month of credit card 2 digits only with leading 0 if <10
+          example: 5
+        expYear:
+          type: integer
+          minLength: 2
+          maxLength: 2
+          description: Expiration year of credit card last 2 digits only
+          example: 23
+        first:
+          type: string
+          maxLength: 128
+          description: Cardholder's first name
+        last:
+          type: string
+          maxLength: 128
+          description: Cardholder's last name
+        address:
+          type: string
+          maxLength: 128
+          description: Cardholder's address
+        city:
+          type: string
+          maxLength: 128
+          description: Cardholder's city
+        state_province:
+          type: string
+          maxLength: 64
+          description: Cardholder's state or province
+        post_code:
+          type: string
+          minLength: 6
+          maxLength: 18
+          description: Cardholder's postal code
+        country_code:
+          type: string
+          minLength: 2
+          maxLength: 2
+          description: Cardholder's country code
+    Check:
+      type: object
+      properties:
+        routing_number:
+          type: string
+          example: 122105155
+          minLength: 9
+          maxLength: 9
+          description: Check routing number
+        account_number:
+          type: string
+          example: 999999999999
+          minLength: 5
+          maxLength: 12
+          description: Check account number
+        name:
+          type: string
+          maxLength: 128
+          description: Account Holder's Name
+      required:
+        - routingNumber
+        - accountNumber
+        - name
+    Error:
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
